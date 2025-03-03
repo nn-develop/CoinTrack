@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+sqlalchemy>=1.4.0
+gino
+asyncpg
+redis
+aiohttp
+python-dotenv
