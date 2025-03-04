@@ -1,8 +1,10 @@
 fastapi
 uvicorn
 sqlalchemy>=1.4.0
+sqlalchemy_utils
 gino
 asyncpg
 redis
 aiohttp
 python-dotenv
+redis

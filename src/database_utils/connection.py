@@ -3,6 +3,8 @@ from sqlalchemy.orm import sessionmaker
 import subprocess
 import time
 import os
+import asyncio
+import asyncpg
 from dotenv import load_dotenv
 from src.logger import logger
 
@@ -38,6 +40,66 @@ class DatabaseConnection:
         """Connect to PostgreSQL database asynchronously."""
         logger.debug(f"Attempting to connect to PostgreSQL database: {self.dbname}")
         return self.async_session()
+
+    async def create_direct_connection(
+        self, db_name: str = "postgres"
+    ) -> asyncpg.Connection:
+        """
+        Create a direct asyncpg connection to PostgreSQL.
+
+        This helper method creates a direct connection to PostgreSQL using asyncpg,
+        which is useful for admin operations or commands that need to run outside transactions.
+        """
+        return await asyncpg.connect(
+            user=self.user,
+            password=self.password,
+            host=self.host,
+            port=self.port,
+            database=db_name,
+        )
+
+    async def execute_outside_transaction(
+        self, command: str, db_name: str = "postgres"
+    ) -> None:
+        """
+        Execute database commands that cannot be run within a transaction block.
+
+        This method connects directly to PostgreSQL using asyncpg and executes commands
+        outside of any transaction context. Use this for administrative commands like
+        CREATE/DROP DATABASE.
+        """
+        conn = await self.create_direct_connection(db_name)
+        try:
+            await conn.execute(command)
+            logger.info(f"Successfully executed: {command}")
+        finally:
+            await conn.close()
+
+    async def terminate_database_connections(self, db_name: str) -> None:
+        """
+        Terminate all connections to a specific database.
+
+        This is necessary before dropping a database to avoid "database is being accessed by other users" errors.
+        """
+        try:
+            conn = await self.create_direct_connection("postgres")
+            try:
+                await conn.execute(
+                    f"""
+                    SELECT pg_terminate_backend(pg_stat_activity.pid)
+                    FROM pg_stat_activity
+                    WHERE pg_stat_activity.datname = '{db_name}'
+                    AND pid <> pg_backend_pid()
+                    """
+                )
+                logger.info(
+                    f"All connections to database '{db_name}' have been terminated."
+                )
+            finally:
+                await conn.close()
+        except Exception as e:
+            logger.error(f"Error terminating connections to database '{db_name}': {e}")
+            raise
 
     async def wait_for_postgres(self, timeout: int, delay: int = 5) -> bool:
         start_time: float = time.time()

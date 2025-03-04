@@ -1,14 +1,21 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import IntegrityError
-from src.logger import setup_logging, logger
-from src.database_utils.connection import DatabaseConnection
+import asyncio
+from src.logger import logger
 from src.models import Coin
+from src.database_utils.connection import DatabaseConnection
 
 
 class DatabaseOperations:
-    def __init__(self):
-        self.connection: DatabaseConnection = DatabaseConnection()
+    def __init__(self, connection: DatabaseConnection = None):
+        """
+        Initialize database operations with a connection.
+
+        Args:
+            connection: DatabaseConnection instance. If None, creates a new connection.
+        """
+        self.connection = connection or DatabaseConnection()
 
     async def check_database_exists(self, session: AsyncSession) -> bool:
         """Check if the database already exists."""
@@ -17,17 +24,29 @@ class DatabaseOperations:
         )
         return result.scalar() is not None
 
-    async def drop_database(self, session: AsyncSession) -> None:
+    async def drop_database(self) -> None:
         """Drop the database if it exists."""
         logger.info(f"Dropping database '{self.connection.dbname}'...")
-        await session.execute(f"DROP DATABASE IF EXISTS {self.connection.dbname}")
+        try:
+            # First terminate all existing connections to the database
+            await self.connection.terminate_database_connections(self.connection.dbname)
 
-    async def create_database(self, session: AsyncSession) -> None:
+            # Now it's safe to drop the database
+            await self.connection.execute_outside_transaction(
+                f"DROP DATABASE IF EXISTS {self.connection.dbname}"
+            )
+        except Exception as e:
+            logger.error(f"Failed to drop database '{self.connection.dbname}': {e}")
+            raise
+
+    async def create_database(self) -> None:
         """Create the database if it doesn't exist."""
         logger.info(f"Creating database '{self.connection.dbname}'...")
-        await session.execute(f"CREATE DATABASE {self.connection.dbname}")
-        await session.execute(
-            f"GRANT ALL PRIVILEGES ON DATABASE {self.connection.dbname} TO {self.connection.user};"
+        await self.connection.execute_outside_transaction(
+            f"CREATE DATABASE {self.connection.dbname}"
+        )
+        await self.connection.execute_outside_transaction(
+            f"GRANT ALL PRIVILEGES ON DATABASE {self.connection.dbname} TO {self.connection.user}"
         )
 
     async def create_coin_table(self, session: AsyncSession) -> None:
@@ -48,3 +67,34 @@ class DatabaseOperations:
             except IntegrityError:
                 await session.rollback()
                 logger.error("Failed to insert coin data due to integrity error.")
+
+
+# Example usage
+async def main():
+    # Database connection setup
+    print("Setting up database connection...")
+    db_connection = DatabaseConnection()
+    async_session = db_connection.async_session
+
+    # Wait for PostgreSQL server to be available
+    if not await db_connection.wait_for_postgres(timeout=60):
+        print("PostgreSQL server is not available. Exiting...")
+        return
+
+    # Create an instance of DatabaseOperations with the connection
+    db_ops = DatabaseOperations(db_connection)
+
+    # Drop the database if it exists
+    await db_ops.drop_database()
+
+    # Now create the database
+    await db_ops.create_database()
+
+    # For operations on tables, we need a session
+    async with async_session() as session:
+        await db_ops.create_coin_table(session)
+
+
+# Run the example
+if __name__ == "__main__":
+    asyncio.run(main())
