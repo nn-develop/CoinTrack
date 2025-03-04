@@ -45,7 +45,7 @@ class PeriodicCoinDataUpdater:
             await self.fetch_and_cache_coin_data()
             await asyncio.sleep(self.interval)
 
-    def stop(self):
+    async def stop(self):
         self.stop_event.set()
 
 

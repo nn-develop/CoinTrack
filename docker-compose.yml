@@ -9,7 +9,7 @@ services:
       - "8000:8000"
     env_file:
       - .env
-    command: bash -c "python -m src.database_utils.init_new_db && tail -f /dev/null"
+    command: bash -c "python main.py"
     # command: tail -f /dev/null
     depends_on:
       postgres:

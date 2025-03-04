@@ -5,6 +5,8 @@ from src.logger import setup_logging, logger
 
 load_dotenv()
 
+setup_logging()
+
 
 class RedisCache:
     def __init__(self, db_index: int = int(os.getenv("REDIS_DB", 0))):
@@ -41,9 +43,20 @@ class RedisCache:
     def get_coin_from_cache(self, id: str) -> dict[str, str]:
         """
         Get all data for a given coin ID from the Redis hash.
+        """
+        try:
+            data: dict[str, str] | None = self.is_coin_in_cache(id)
+            if data:
+                return data
+            else:
+                return {}
+        except redis.RedisError as e:
+            logger.error(f"Error retrieving cache for id {id}: {e}")
+            return {}
 
-        :param id: The ID of the coin.
-        :return: A dictionary containing the coin's data (id, symbol, name).
+    def is_coin_in_cache(self, id: str) -> dict[str, str] | None:
+        """
+        Check if a coin with a specific ID is in the cache.
         """
         try:
             data = self.client.hgetall(id)
@@ -53,16 +66,14 @@ class RedisCache:
                     for key, value in data.items()
                 }
             else:
-                logger.info(f"No cache found for id: {id}")
-                return {}
+                return None
         except redis.RedisError as e:
             logger.error(f"Error retrieving cache for id {id}: {e}")
-            return {}
+            return None
 
 
 # Example usage
 if __name__ == "__main__":
-    setup_logging()
     cache = RedisCache()
     cache.clear_cache()  # Clear the entire Redis cache at the beginning
     coin_id = "bitcoin"
@@ -77,9 +88,3 @@ if __name__ == "__main__":
     # Retrieve and print coin data from cache
     bitcoin_data = cache.get_coin_from_cache(coin_id)
     ethereum_data = cache.get_coin_from_cache(coin_id2)
-    print(f"Bitcoin data: {bitcoin_data}")
-    print(f"Ethereum data: {ethereum_data}")
-    print(f"Type of bitcoin_data: {type(bitcoin_data)}")
-    if bitcoin_data:
-        for key, value in bitcoin_data.items():
-            print(f"Type of key: {type(key)}, Type of value: {type(value)}")

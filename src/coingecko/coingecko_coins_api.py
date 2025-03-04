@@ -1,6 +1,8 @@
 import requests
 from src.logger import setup_logging, logger
 
+setup_logging()
+
 
 class CoinGeckoAPI:
     BASE_URL = "https://api.coingecko.com/api/v3"
@@ -19,6 +21,7 @@ class CoinGeckoAPI:
         try:
             response: requests.Response = self.session.get(url)
             response.raise_for_status()
+            logger.info(f"Fetched data for {coin_id} from CoinGecko API.")
             return response.json()
         except requests.RequestException as e:
             logger.error(f"Error fetching data from CoinGecko API: {e}")
@@ -42,9 +45,6 @@ class CoinGeckoAPI:
 
 # Example usage
 if __name__ == "__main__":
-    setup_logging()
     api = CoinGeckoAPI()
     coin_list = api.get_coin_list()
-    # print(coin_list)
     coin_info = api.get_coin_info("ethereum")
-    print(coin_info)
