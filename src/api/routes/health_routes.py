@@ -28,7 +28,7 @@ async def readiness_check(session: AsyncSession = Depends(get_db)):
     """
     Readiness check that verifies database and Redis connections are working
     """
-    health_status = {
+    health_status: dict[str, str | bool] = {
         "status": "ok",
         "database": False,
         "redis": False,

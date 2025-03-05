@@ -1,11 +1,9 @@
 import redis
 import os
 from dotenv import load_dotenv
-from src.logger import setup_logging, logger
+from src.logger import logger
 
 load_dotenv()
-
-setup_logging()
 
 
 class RedisCache:
@@ -28,10 +26,6 @@ class RedisCache:
     def set_coin_cache(self, id: str, symbol: str, name: str) -> None:
         """
         Set a value in the Redis hash.
-
-        :param id: The ID of the coin.
-        :param symbol: The symbol of the coin.
-        :param name: The name of the coin.
         """
         try:
             value: dict[str, str] = {"symbol": symbol, "name": name}
@@ -70,21 +64,3 @@ class RedisCache:
         except redis.RedisError as e:
             logger.error(f"Error retrieving cache for id {id}: {e}")
             return None
-
-
-# Example usage
-if __name__ == "__main__":
-    cache = RedisCache()
-    cache.clear_cache()  # Clear the entire Redis cache at the beginning
-    coin_id = "bitcoin"
-    coin_symbol = "BTC"
-    coin_name = "Bitcoin"
-    cache.set_coin_cache(coin_id, coin_symbol, coin_name)
-    coin_id2 = "ethereum"
-    coin_symbol2 = "ETH"
-    coin_name2 = "Ethereum"
-    cache.set_coin_cache(coin_id2, coin_symbol2, coin_name2)
-
-    # Retrieve and print coin data from cache
-    bitcoin_data = cache.get_coin_from_cache(coin_id)
-    ethereum_data = cache.get_coin_from_cache(coin_id2)

@@ -1,7 +1,5 @@
 import requests
-from src.logger import setup_logging, logger
-
-setup_logging()
+from src.logger import logger
 
 
 class CoinGeckoAPI:
@@ -13,9 +11,6 @@ class CoinGeckoAPI:
     def get_coin_info(self, coin_id: str) -> dict:
         """
         Fetch basic information about a cryptocurrency from CoinGecko API.
-
-        :param coin_id: The ID of the cryptocurrency (e.g., 'bitcoin').
-        :return: A dictionary containing the cryptocurrency information.
         """
         url: str = f"{self.BASE_URL}/coins/{coin_id}"
         try:
@@ -30,8 +25,6 @@ class CoinGeckoAPI:
     def get_coin_list(self) -> list:
         """
         Fetch a list of all available cryptocurrencies from CoinGecko API.
-
-        :return: A list of dictionaries, each containing the ID and name of a cryptocurrency.
         """
         url: str = f"{self.BASE_URL}/coins/list"
         try:
@@ -41,10 +34,3 @@ class CoinGeckoAPI:
         except requests.RequestException as e:
             logger.error(f"Error fetching coin list from CoinGecko API: {e}")
             return []
-
-
-# Example usage
-if __name__ == "__main__":
-    api = CoinGeckoAPI()
-    coin_list = api.get_coin_list()
-    coin_info = api.get_coin_info("ethereum")

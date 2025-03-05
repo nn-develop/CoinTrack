@@ -3,7 +3,7 @@ from sqlalchemy.future import select
 from sqlalchemy.exc import IntegrityError
 import asyncio
 from src.logger import logger
-from src.models import Coin
+from src.models.coin import Coin
 from src.database_utils.connection import DatabaseConnection
 
 
@@ -11,9 +11,6 @@ class DatabaseOperations:
     def __init__(self, connection: DatabaseConnection | None = None):
         """
         Initialize database operations with a connection.
-
-        Args:
-            connection: DatabaseConnection instance. If None, creates a new connection.
         """
         self.connection: DatabaseConnection = connection or DatabaseConnection()
 
@@ -68,31 +65,3 @@ class DatabaseOperations:
 #         except IntegrityError:
 #             await session.rollback()
 #             logger.error("Failed to insert coin data due to integrity error.")
-
-
-# Example usage
-async def main():
-    # Database connection setup
-    db_connection = DatabaseConnection()
-    async_session = db_connection.async_session
-
-    # Wait for PostgreSQL server to be available
-    if not await db_connection.wait_for_postgres(timeout=60):
-        return
-
-    # Create an instance of DatabaseOperations with the connection
-    db_ops = DatabaseOperations(db_connection)
-
-    # Drop the database if it exists
-    await db_ops.drop_database()
-
-    # Now create the database
-    await db_ops.create_database()
-    # For operations on tables, we need a session
-    # async with async_session() as session:
-    #     await db_ops.create_coin_table(session)
-
-
-# Run the example
-if __name__ == "__main__":
-    asyncio.run(main())

@@ -46,9 +46,6 @@ class DatabaseConnection:
     ) -> asyncpg.Connection:
         """
         Create a direct asyncpg connection to PostgreSQL.
-
-        This helper method creates a direct connection to PostgreSQL using asyncpg,
-        which is useful for admin operations or commands that need to run outside transactions.
         """
         return await asyncpg.connect(
             user=self.user,
@@ -63,10 +60,6 @@ class DatabaseConnection:
     ) -> None:
         """
         Execute database commands that cannot be run within a transaction block.
-
-        This method connects directly to PostgreSQL using asyncpg and executes commands
-        outside of any transaction context. Use this for administrative commands like
-        CREATE/DROP DATABASE.
         """
         conn = await self.create_direct_connection(db_name)
         try:
@@ -78,7 +71,6 @@ class DatabaseConnection:
     async def terminate_database_connections(self, db_name: str) -> None:
         """
         Terminate all connections to a specific database.
-
         This is necessary before dropping a database to avoid "database is being accessed by other users" errors.
         """
         try:

@@ -1,7 +1,7 @@
 import asyncio
 from src.coingecko.coingecko_coins_api import CoinGeckoAPI
 from src.redis_cache.redis_cache import RedisCache
-from src.logger import setup_logging, logger
+from src.logger import logger
 
 
 class PeriodicCoinDataUpdater:
@@ -47,15 +47,4 @@ class PeriodicCoinDataUpdater:
 
     async def stop(self):
         self.stop_event.set()
-
-
-if __name__ == "__main__":
-    setup_logging()
-    updater = PeriodicCoinDataUpdater(
-        interval=86400, batch_size=100
-    )  # 86400 seconds = 24 hours
-    try:
-        asyncio.run(updater.periodic_task())
-    except KeyboardInterrupt:
-        updater.stop()
         logger.info("Periodic coin data updater stopped.")

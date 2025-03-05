@@ -3,21 +3,14 @@ import os
 from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
-from src.models import Base
+from src.models.coin import Base
 from src.database_utils.connection import DatabaseConnection
-from src.logger import setup_logging, logger
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
 load_dotenv()
 
-# Set up logging
-setup_logging()
-
-# Load Alembic configuration
 config = context.config
 
-# Add your model's MetaData object here for 'autogenerate' support
 target_metadata = Base.metadata
 
 

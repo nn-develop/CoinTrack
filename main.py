@@ -1,11 +1,20 @@
 import asyncio
+import unittest
+from fastapi import FastAPI
 from src.logger import setup_logging, logger
 from src.database_utils.connection import DatabaseConnection
 from src.database_utils.operations import DatabaseOperations
-from src.database_utils.alembic_migration import run_alembic_migrations
+from src.api.routes.health_routes import router as health_router
+from src.api.routes.coin_routes import router as coin_router
+from src.alembic.alembic_migration import run_alembic_migrations
 from src.services.uvicorn_service import run_uvicorn
 
 setup_logging()
+
+app = FastAPI()
+
+app.include_router(health_router)
+app.include_router(coin_router)
 
 
 async def main():
@@ -47,6 +56,15 @@ async def main():
     logger.info("Database setup and migrations completed successfully!")
 
 
+def run_tests():
+    # Just a sample of unit tests
+    loader = unittest.TestLoader()
+    tests: unittest.TestSuite = loader.discover("tests")
+    testRunner = unittest.TextTestRunner()
+    testRunner.run(tests)
+
+
 if __name__ == "__main__":
+    run_tests()
     asyncio.run(main())
     run_uvicorn()
