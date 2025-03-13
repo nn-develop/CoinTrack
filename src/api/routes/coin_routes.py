@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,6 +19,7 @@ periodic_updater = PeriodicCoinDataUpdater()
 @router.post(
     "/",
     response_model=CoinBase,
+    status_code=status.HTTP_201_CREATED,
     responses={201: {"description": "Coin created successfully"}},
 )
 async def create_coin(coin: CoinCreate, session: AsyncSession = Depends(get_db)):

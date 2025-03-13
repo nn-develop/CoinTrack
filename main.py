@@ -18,7 +18,8 @@ app.include_router(coin_router)
 
 
 async def main():
-    # Setup connections
+    # This script is adjusted just for demonstration purposes
+
     db_connection = DatabaseConnection()
     db_ops = DatabaseOperations(db_connection)
 
